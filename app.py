@@ -1,63 +1,50 @@
 import os
+import requests
 import streamlit as st
-from groq import Groq
 
-# -------------------------
-# Configuration
-# -------------------------
-st.set_page_config(page_title="LLM Calculator", page_icon="🧮")
+st.set_page_config(page_title="Calculator", page_icon="🧮")
+st.title("🧮 Calculator App")
 
-st.title("🧮 LLM Calculator")
-st.write("Powered by **Groq LLM** + **Streamlit**")
-
-# Groq API Key (set as HF Space Secret or env variable)
-GROQ_API_KEY ="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"
+GROQ_API_KEY = "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"
 
 if not GROQ_API_KEY:
-    st.error("GROQ_API_KEY not found. Please set it as an environment variable.")
+    st.error("GROQ_API_KEY not set")
     st.stop()
 
-client = Groq(api_key=GROQ_API_KEY)
-
-# -------------------------
-# UI
-# -------------------------
-user_input = st.text_input(
-    "Enter a calculation (math expression or natural language):",
-    placeholder="e.g. 25 * (4 + 6) or what is 20% of 150"
+query = st.text_input(
+    "Enter your calculation",
+    placeholder="Example: 25 * (4 + 6) or what is 10% of 200"
 )
 
-# -------------------------
-# LLM Calculator Logic
-# -------------------------
-def calculate_with_llm(query: str) -> str:
-    prompt = f"""
-You are a calculator.
-- Solve the user's math problem accurately.
-- Return ONLY the final numeric answer.
-- No explanations, no text.
+def calculate_with_groq(question):
+    url = "https://api.groq.com/openai/v1/chat/completions"
 
-Problem: {query}
-"""
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-    response = client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0
-    )
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Calculate and return ONLY the final number: {question}"
+            }
+        ],
+        "temperature": 0
+    }
 
-    return response.choices[0].message.content.strip()
+    response = requests.post(url, headers=headers, json=payload)
+    return response.json()["choices"][0]["message"]["content"].strip()
 
-# -------------------------
-# Action
-# -------------------------
 if st.button("Calculate"):
-    if user_input.strip():
+    if query:
         with st.spinner("Calculating..."):
             try:
-                result = calculate_with_llm(user_input)
-                st.success(f"✅ Result: **{result}**")
+                result = calculate_with_groq(query)
+                st.success(f"Result: {result}")
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error("Calculation failed")
     else:
-        st.warning("Please enter a calculation.")
+        st.warning("Please enter a calculation")
