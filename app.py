@@ -11,7 +11,7 @@ st.title("🧮 LLM Calculator")
 st.write("Powered by **Groq LLM** + **Streamlit**")
 
 # Groq API Key (set as HF Space Secret or env variable)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_KEY ="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"
 
 if not GROQ_API_KEY:
     st.error("GROQ_API_KEY not found. Please set it as an environment variable.")
